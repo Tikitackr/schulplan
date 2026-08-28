@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Stundenplan</title>
+<style>
+  :root { color-scheme: light dark; --rand: #8883; --leise: #8887; }
+  body { font: 17px/1.5 -apple-system, system-ui, sans-serif; margin: 0 auto;
+         padding: 1rem 1rem 3rem; max-width: 34rem; }
+  h1 { font-size: 1.35rem; margin: 0 0 1rem; }
+  h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .05em;
+       margin: 1.6rem 0 .4rem; opacity: .55; }
+  .zeile { display: flex; gap: .6rem; padding: .4rem 0;
+           border-bottom: 1px solid var(--rand); }
+  /* nowrap plus feste Breite: Ohne das bricht "07:45\u201309:05" auf zwei
+     Zeilen und jede Stunde wird doppelt so hoch. */
+  .zeit { flex: 0 0 6.4rem; white-space: nowrap; font-size: .92em;
+          font-variant-numeric: tabular-nums; opacity: .75; }
+  .raum { margin-left: auto; padding-left: .5rem; opacity: .55; }
+  .aus { text-decoration: line-through; opacity: .5; }
+  .vertretung::after { content: " (Vertretung)"; opacity: .55; font-size: .9em; }
+  ul { margin: 0; padding-left: 1.3rem; }
+  li { padding: .15rem 0; }
+  nav { display: flex; gap: .6rem; margin-top: 2rem; }
+  button { flex: 1; padding: .8rem; font: inherit; border: 1px solid var(--rand);
+           border-radius: .7rem; background: transparent; color: inherit;
+           cursor: pointer; }
+  button[disabled] { opacity: .35; cursor: default; }
+  .hinweis { padding: 1rem; border: 1px solid var(--rand); border-radius: .7rem; }
+  .stand { margin-top: 1.5rem; font-size: .85rem; opacity: .5; }
+</style>
+</head>
+<body>
+<div id="inhalt"><p class="hinweis">Wird geladen …</p></div>
+<script type="module">
+import { quelleAusFragment, waehleTag, standText } from './seite.js';
+
+const inhalt = document.getElementById('inhalt');
+
+function hinweis(text) {
+  inhalt.replaceChildren();
+  const p = document.createElement('p');
+  p.className = 'hinweis';
+  p.textContent = text;
+  inhalt.appendChild(p);
+}
+
+const quelle = quelleAusFragment(location.hash);
+if (!quelle) {
+  hinweis('Dieser Seite fehlt die Adresse der Datenquelle. Sie steht im Link hinter dem Rautezeichen. Ohne sie kann die Seite nichts anzeigen.');
+} else {
+  starten(quelle);
+}
+
+async function starten(quelle) {
+  let daten;
+  try {
+    const antwort = await fetch(quelle, { cache: 'no-store' });
+    if (!antwort.ok) throw new Error('Antwort ' + antwort.status);
+    daten = await antwort.json();
+  } catch (e) {
+    // Ein stiller leerer Tag saehe aus wie schulfrei. Deshalb der Grund.
+    hinweis('Die Daten sind nicht erreichbar (' + e.message + '). Ohne Netz kann die Seite nichts anzeigen.');
+    return;
+  }
+  let tag = waehleTag(daten.days, new Date());
+  if (!tag) {
+    hinweis('In den Daten steht kein einziger Tag mit Unterricht.');
+    return;
+  }
+  const tage = (daten.days || []).map(d => d.date).sort();
+  const zeichnen = () => malen(daten, tage, tag, richtung => {
+    const i = tage.indexOf(tag) + richtung;
+    if (i >= 0 && i < tage.length) { tag = tage[i]; zeichnen(); }
+  });
+  zeichnen();
+}
+
+function el(art, klasse, text) {
+  const e = document.createElement(art);
+  if (klasse) e.className = klasse;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function malen(daten, tage, datum, blaettern) {
+  const tag = daten.days.find(d => d.date === datum) || { lessons: [], packliste: [] };
+  inhalt.replaceChildren();
+
+  inhalt.appendChild(el('h1', null, new Date(datum + 'T12:00:00')
+    .toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })));
+
+  inhalt.appendChild(el('h2', null, 'Stunden'));
+  if (tag.lessons.length === 0) {
+    inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
+  }
+  for (const s of tag.lessons) {
+    const zeile = el('div', 'zeile');
+    zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));
+    zeile.appendChild(el('span',
+      s.status === 'cancelled' ? 'aus' : s.status === 'substitution' ? 'vertretung' : null,
+      s.subject));
+    if (s.room) zeile.appendChild(el('span', 'raum', s.room));
+    inhalt.appendChild(zeile);
+  }
+
+  inhalt.appendChild(el('h2', null, 'Einpacken'));
+  const stuecke = tag.packliste || [];
+  if (stuecke.length === 0) {
+    inhalt.appendChild(el('p', null, 'Nichts Besonderes.'));
+  } else {
+    const liste = el('ul');
+    for (const stueck of stuecke) liste.appendChild(el('li', null, stueck));
+    inhalt.appendChild(liste);
+  }
+
+  const offen = (daten.homework || [])
+    .filter(a => !a.completed && a.due >= datum)
+    .sort((a, b) => a.due.localeCompare(b.due));
+  inhalt.appendChild(el('h2', null, 'Hausaufgaben'));
+  if (offen.length === 0) {
+    inhalt.appendChild(el('p', null, 'Keine offenen Aufgaben.'));
+  }
+  for (const a of offen) {
+    const zeile = el('div', 'zeile');
+    zeile.appendChild(el('span', 'zeit', 'bis ' + a.due.slice(8) + '.' + a.due.slice(5, 7) + '.'));
+    zeile.appendChild(el('span', null, (a.subject ? a.subject + ': ' : '') + a.text));
+    inhalt.appendChild(zeile);
+  }
+
+  const i = tage.indexOf(datum);
+  const nav = el('nav');
+  const zurueck = el('button', null, '← Vorheriger Tag');
+  const vor = el('button', null, 'Nächster Tag →');
+  zurueck.disabled = i <= 0;
+  vor.disabled = i < 0 || i >= tage.length - 1;
+  zurueck.onclick = () => blaettern(-1);
+  vor.onclick = () => blaettern(1);
+  nav.append(zurueck, vor);
+  inhalt.appendChild(nav);
+
+  const stand = standText(daten.generated);
+  if (stand) inhalt.appendChild(el('p', 'stand', 'Stand: ' + stand));
+}
+</script>
+</body>
+</html>
