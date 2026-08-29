@@ -84,18 +84,18 @@ import { packEintrag } from '../seite.js';
 
 test('ein Eintrag mit Farbe ergibt Text und Farbe', () => {
   assert.deepEqual(packEintrag({ text: 'etwas', farbe: '#abcdef' }),
-                   { text: 'etwas', farbe: '#abcdef' });
+                   { fach: null, text: 'etwas', farbe: '#abcdef' });
 });
 
 test('ein Eintrag ohne Farbe bekommt keinen Punkt', () => {
-  assert.deepEqual(packEintrag({ text: 'etwas' }), { text: 'etwas', farbe: null });
+  assert.deepEqual(packEintrag({ text: 'etwas' }), { fach: null, text: 'etwas', farbe: null });
 });
 
 test('ein blosser Text bleibt lesbar', () => {
   // Die aeltere Fassung der Daten fuehrte die Packliste als Texte. Zwischen
   // einer neuen Seite und dem naechsten stuendlichen Lauf liegt sonst eine
   // Stunde mit leerer Liste.
-  assert.deepEqual(packEintrag('etwas'), { text: 'etwas', farbe: null });
+  assert.deepEqual(packEintrag('etwas'), { fach: null, text: 'etwas', farbe: null });
 });
 
 test('was kein Farbwert ist, wird nicht gezeichnet', () => {
@@ -108,4 +108,22 @@ test('ein Eintrag ohne Text ergibt nichts', () => {
   assert.equal(packEintrag({}), null);
   assert.equal(packEintrag(''), null);
   assert.equal(packEintrag(undefined), null);
+});
+
+// Vor dem Stueck steht das Fach ("Englisch: rote Mappe"): Die Paarung ist der
+// Lerneffekt. Aeltere Daten kennen kein Fach, dann steht nur das Stueck da.
+
+test('das Fach kommt mit', () => {
+  assert.deepEqual(packEintrag({ fach: 'Englisch', text: 'etwas', farbe: '#abcdef' }),
+                   { fach: 'Englisch', text: 'etwas', farbe: '#abcdef' });
+});
+
+test('ohne Fach bleibt das Stueck fuer sich', () => {
+  assert.equal(packEintrag({ text: 'etwas' }).fach, null);
+  assert.equal(packEintrag('etwas').fach, null);
+});
+
+test('ein Fach, das kein Text ist, wird verworfen', () => {
+  assert.equal(packEintrag({ fach: 42, text: 'etwas' }).fach, null);
+  assert.equal(packEintrag({ fach: '', text: 'etwas' }).fach, null);
 });

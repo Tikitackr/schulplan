@@ -27,14 +27,17 @@
   /* Ohne Aufzaehlungszeichen: Der Farbpunkt ist der Marker. Beides zusammen
      sind zwei Marker in derselben Zeile. */
   ul { margin: 0; padding: 0; list-style: none; }
-  li { padding: .15rem 0; }
-  /* Eintraege ohne Farbe (Hefte, Zirkel, Sportzeug) ruecken auf dieselbe
-     Kante ein wie die mit Punkt, sonst steht die Liste treppenfoermig. */
-  li > .text { padding-left: 1.17em; }
+  /* Zwei Spalten: Markierung und Text. Ohne das faellt die zweite Zeile
+     eines langen Eintrags unter den Punkt zurueck statt eingerueckt zu
+     bleiben. */
+  li { display: flex; gap: .45em; padding: .15rem 0; }
   /* Der Punkt traegt immer einen duennen Rand. Ohne ihn verschwindet
      ausgerechnet die schwarze Mappe auf dunklem Grund. */
-  .punkt { display: inline-block; width: .72em; height: .72em; border-radius: 50%;
-           border: 1px solid var(--leise); margin-right: .45em; vertical-align: baseline; }
+  .punkt { flex: 0 0 auto; width: .72em; height: .72em; border-radius: 50%;
+           border: 1px solid var(--leise); margin-top: .42em; }
+  /* Eintraege ohne Farbe (Hefte, Zirkel, Sportzeug) halten dieselbe Spalte,
+     sonst stuende die Liste treppenfoermig. */
+  .punkt.leer { border-color: transparent; }
   details { margin-top: 1.6rem; }
   details > *:not(summary) { margin-top: .4rem; }
   summary { font-size: .95rem; text-transform: uppercase; letter-spacing: .05em;
@@ -121,26 +124,23 @@ function malen(daten, tage, datum, blaettern) {
     const liste = el('ul');
     for (const stueck of stuecke) {
       const zeile = el('li');
-      if (stueck.farbe) {
-        const punkt = el('span', 'punkt');
-        punkt.style.background = stueck.farbe;
-        zeile.appendChild(punkt);
-      }
-      zeile.appendChild(el('span', stueck.farbe ? null : 'text', stueck.text));
+      const punkt = el('span', stueck.farbe ? 'punkt' : 'punkt leer');
+      if (stueck.farbe) punkt.style.background = stueck.farbe;
+      zeile.appendChild(punkt);
+      zeile.appendChild(el('span', null,
+                            (stueck.fach ? stueck.fach + ': ' : '') + stueck.text));
       liste.appendChild(zeile);
     }
     inhalt.appendChild(liste);
   }
 
-  // Die Stunden stehen aufgeklappt. Zugeklappt waere die Seite kuerzer, aber
-  // eine ausgefallene Stunde ist der Grund, warum ein Fach nicht in der
-  // Packliste steht - versteckt sieht die fehlende Mappe wie ein Fehler aus.
+  // Beide Klappen stehen zu (ausdruecklicher Wunsch, 29.08.2026). Die
+  // Packliste steht darueber offen da, und die ist der Zweck der Seite.
   if (tag.lessons.length === 0) {
     inhalt.appendChild(el('h2', null, 'Stunden'));
     inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
   } else {
     const klappe = el('details');
-    klappe.open = true;
     klappe.appendChild(el('summary', null, 'Stunden (' + tag.lessons.length + ')'));
     for (const s of tag.lessons) {
       const zeile = el('div', 'zeile');

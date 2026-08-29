@@ -69,5 +69,10 @@ export function packEintrag(roh) {
   const farbe = typeof eintrag.farbe === 'string' && FARBWERT.test(eintrag.farbe)
     ? eintrag.farbe
     : null;
-  return { text, farbe };
+  // Das Fach steht vor dem Stueck: "Englisch: rote Mappe". Wer das liest,
+  // merkt sich die Farbe zum Fach. Aeltere Daten kennen kein Fach.
+  const fach = typeof eintrag.fach === 'string' && eintrag.fach !== ''
+    ? eintrag.fach
+    : null;
+  return { fach, text, farbe };
 }
