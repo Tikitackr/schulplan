@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { quelleAusFragment, ferienText } from '../seite.js';
+import { quelleAusFragment, ferienText, terminText } from '../seite.js';
 
 // Die Seite darf nur Adressen abrufen, die wie eine Gist-Kennung aussehen.
 // Sonst waere sie ein offener Abrufdienst fuer beliebige Adressen.
@@ -213,4 +213,15 @@ test('ohne Ferienhinweis bleibt die Zeile weg', () => {
   assert.equal(ferienText({}), null);
   assert.equal(ferienText({ ferien: '' }), null);
   assert.equal(ferienText(null), null);
+});
+
+test('der Terminhinweis kommt aus den Daten', () => {
+  assert.equal(terminText({ termin: 'In 2 Tagen (31.8.): Englisch, Vokabeltest' }),
+    'In 2 Tagen (31.8.): Englisch, Vokabeltest');
+});
+
+test('ohne Terminhinweis bleibt die Zeile weg', () => {
+  assert.equal(terminText({}), null);
+  assert.equal(terminText({ termin: '' }), null);
+  assert.equal(terminText(null), null);
 });

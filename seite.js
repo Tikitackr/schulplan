@@ -115,3 +115,15 @@ export function ferienText(tag) {
   const text = tag?.ferien;
   return typeof text === 'string' && text !== '' ? text : null;
 }
+
+// Der Terminhinweis, etwa "In 2 Tagen (31.8.): Englisch, Vokabeltest…". Er
+// entsteht im privaten Projekt aus dem Freitext der Hausaufgaben - die
+// einzige Stelle, die raet. Deshalb nennt der Satz das erkannte Datum: So
+// sieht man in einer Sekunde, ob die Erkennung recht hat.
+//
+// Fehlt er, gibt es die Zeile nicht. Das ist der Normalfall - die meisten
+// Aufgaben nennen kein Datum.
+export function terminText(tag) {
+  const text = tag?.termin;
+  return typeof text === 'string' && text !== '' ? text : null;
+}

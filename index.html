@@ -54,6 +54,11 @@
   /* Steht direkt unter dem Datum und gehoert optisch dazu, deshalb der
      negative Abstand nach oben. Leise: Es ist eine Randnotiz, keine Aufgabe. */
   .ferien { margin: -.7rem 0 1.2rem; font-size: .9rem; opacity: .55; }
+  /* Der Termin steht kraeftiger da als der Ferienhinweis: Er ist eine
+     Ansage, keine Randnotiz. Kein eigener Farbton - die Seite kommt ohne
+     Ampelfarben aus, und ein roter Kasten am Morgen macht Druck. */
+  .termin { margin: -.7rem 0 .3rem; font-size: .95rem; opacity: .8; }
+  .termin + .ferien { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -78,7 +83,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText } from './seite.js?v=2';
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminText } from './seite.js?v=3';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -144,6 +149,11 @@ function malen(daten, tage, datum, blaettern) {
 
   // Direkt unter dem Datum, weil er sich darauf bezieht. Fehlt er, gibt es
   // die Zeile nicht - kein Platzhalter, keine Luecke.
+  // Der Termin steht ueber den Ferien: Ein Vokabeltest in zwei Tagen ist
+  // dringender als ein Countdown.
+  const termin = terminText(tag);
+  if (termin) inhalt.appendChild(el('p', 'termin', termin));
+
   const ferien = ferienText(tag);
   if (ferien) inhalt.appendChild(el('p', 'ferien', ferien));
 
