@@ -33,6 +33,16 @@ er hier einen fehlenden „Aktueller Stand"-Abschnitt, obwohl das Absicht ist.
 
 Stand-Quelle: ~/Projekte/untis-kalender/CLAUDE.md
 
+## Wenn du seite.js änderst
+
+**Die Kennung `?v=N` im Import in `index.html` hochzählen.** Die beiden
+Dateien werden getrennt und mit zehn Minuten Zwischenspeicher ausgeliefert.
+Ohne neue Kennung kann ein Gerät die neue `index.html` mit der alten
+`seite.js` mischen; dann fehlen der Seite Funktionen, das Skript bricht ab,
+und es bleibt bei „Wird geladen …" stehen. Am 29.08.2026 auf einem iPhone
+passiert. Ein Test wacht darüber, dass die Kennung überhaupt da ist — dass sie
+hochgezählt wurde, kann er nicht wissen.
+
 ## Prüfen
 
 `npm test`. Nach jeder Änderung.

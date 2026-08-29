@@ -53,8 +53,27 @@
 </head>
 <body>
 <div id="inhalt"><p class="hinweis">Wird geladen …</p></div>
+<script>
+  // Bricht das Modul ab (etwa weil Browser-Zwischenspeicher eine alte
+  // seite.js liefert), passiert sonst nichts weiter und "Wird geladen …"
+  // bleibt fuer immer stehen. Das sieht aus wie ein langsames Netz, ist aber
+  // ein Fehler. Diese Notbremse laeuft ohne Modul, also auch dann.
+  setTimeout(function () {
+    var inhalt = document.getElementById('inhalt');
+    if (inhalt && inhalt.dataset.fertig !== 'ja') {
+      inhalt.innerHTML = '<p class="hinweis">'
+        + 'Die Seite konnte nicht vollständig geladen werden. Bitte neu laden.'
+        + ' Bleibt es dabei, hilft es, die Seite ganz zu schließen und erneut'
+        + ' zu öffnen.</p>';
+    }
+  }, 5000);
+</script>
 <script type="module">
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel } from './seite.js';
+// Die Kennung hinter dem Fragezeichen MUSS bei jeder Aenderung an seite.js
+// hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
+// alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
+// Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel } from './seite.js?v=1';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -62,6 +81,9 @@ const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
 const inhalt = document.getElementById('inhalt');
 
 function hinweis(text) {
+  // Auch ein Hinweis ist eine Antwort: Die Notbremse braucht nicht mehr zu
+  // greifen, die Seite hat ja etwas zu sagen.
+  inhalt.dataset.fertig = 'ja';
   inhalt.replaceChildren();
   const p = document.createElement('p');
   p.className = 'hinweis';
@@ -110,6 +132,7 @@ function el(art, klasse, text) {
 function malen(daten, tage, datum, blaettern) {
   const tag = daten.days.find(d => d.date === datum) || { lessons: [], packliste: [] };
   inhalt.replaceChildren();
+  inhalt.dataset.fertig = 'ja';
 
   inhalt.appendChild(el('h1', null, new Date(datum + 'T12:00:00')
     .toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })));

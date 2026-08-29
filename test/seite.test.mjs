@@ -174,3 +174,28 @@ test('ohne Fach bleibt das Stueck fuer sich', () => {
   assert.equal(packText({ fach: null, text: 'rote Mappe', farbe: '#e03131' }), 'rote Mappe');
   assert.equal(packText({ fach: null, text: 'Zirkel', farbe: null }), 'Zirkel');
 });
+
+import { readFileSync } from 'node:fs';
+
+// Die Seite besteht aus zwei Dateien, die GitHub getrennt und mit
+// Zwischenspeicher ausliefert. Holt sich ein Geraet die neue index.html, aber
+// die alte seite.js, verlangt die Seite Funktionen, die es dort noch nicht
+// gibt - das Skript bricht ab und die Seite bleibt bei "Wird geladen ..."
+// stehen. Am 29.08.2026 auf Thomas' iPhone passiert.
+//
+// Die Kennung hinter dem Fragezeichen macht daraus zwei verschiedene
+// Adressen: Eine neue index.html holt zwangslaeufig eine neue seite.js.
+// Sie MUSS bei jeder Aenderung an seite.js hochgezaehlt werden.
+
+test('die Seite laedt ihr Skript mit einer Fassungskennung', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /from '\.\/seite\.js\?v=\d+'/,
+    'ohne ?v=N kann ein Geraet eine alte seite.js mit einer neuen Seite mischen');
+});
+
+test('die Seite meldet sich, wenn sie haengen bleibt', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /Wird geladen/);
+  assert.match(html, /nicht vollständig geladen/,
+    'ein ewiges "Wird geladen ..." sieht aus wie ein langsames Netz, ist aber ein Fehler');
+});
