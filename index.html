@@ -54,7 +54,7 @@
 <body>
 <div id="inhalt"><p class="hinweis">Wird geladen …</p></div>
 <script type="module">
-import { quelleAusFragment, waehleTag, standText, packEintrag, stundenTitel } from './seite.js';
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel } from './seite.js';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -127,8 +127,7 @@ function malen(daten, tage, datum, blaettern) {
       const punkt = el('span', stueck.farbe ? 'punkt' : 'punkt leer');
       if (stueck.farbe) punkt.style.background = stueck.farbe;
       zeile.appendChild(punkt);
-      zeile.appendChild(el('span', null,
-                            (stueck.fach ? stueck.fach + ': ' : '') + stueck.text));
+      zeile.appendChild(el('span', null, packText(stueck)));
       liste.appendChild(zeile);
     }
     inhalt.appendChild(liste);

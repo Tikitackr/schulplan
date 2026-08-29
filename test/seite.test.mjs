@@ -151,3 +151,26 @@ test('was keine Uhrzeit ist, wird nicht angezeigt', () => {
     assert.equal(stundenTitel({ ende: unfug }), 'Stundenplan', String(unfug));
   }
 });
+
+import { packText } from '../seite.js';
+
+// Was in der Zeile steht. Traegt der Eintrag eine Farbe, ist es eine Mappe -
+// dann sagt der Punkt die Farbe und das Wort "rote Mappe" waere dieselbe
+// Angabe ein zweites Mal. Ohne Farbe ist das Stueck die eigentliche Angabe.
+
+test('eine Mappe zeigt nur ihr Fach, die Farbe sagt der Punkt', () => {
+  assert.equal(packText({ fach: 'Englisch', text: 'rote Mappe', farbe: '#e03131' }),
+               'Englisch');
+});
+
+test('ohne Farbe steht das Stueck hinter dem Fach', () => {
+  assert.equal(packText({ fach: 'Sport', text: 'T-Shirt, Hose', farbe: null }),
+               'Sport: T-Shirt, Hose');
+});
+
+test('ohne Fach bleibt das Stueck fuer sich', () => {
+  // Aeltere Daten kennen kein Fach. Dann faellt nichts weg, auch bei Farbe
+  // nicht - sonst stuende dort gar nichts.
+  assert.equal(packText({ fach: null, text: 'rote Mappe', farbe: '#e03131' }), 'rote Mappe');
+  assert.equal(packText({ fach: null, text: 'Zirkel', farbe: null }), 'Zirkel');
+});

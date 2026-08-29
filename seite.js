@@ -89,3 +89,17 @@ export function stundenTitel(tag) {
   if (typeof ende !== 'string' || !UHRZEIT.test(ende)) return 'Stundenplan';
   return 'Stundenplan bis ' + ende;
 }
+
+// Was in der Zeile der Packliste steht.
+//
+// Traegt der Eintrag eine Farbe, ist es eine Mappe. Dann sagt der Punkt die
+// Farbe, und "Englisch: rote Mappe" saehe dieselbe Angabe zweimal. Es bleibt
+// beim Fach. Ohne Farbe (Hefte, Zirkel, Sportzeug) ist das Stueck die
+// eigentliche Angabe und steht hinter dem Fach.
+//
+// Der Preis ist bewusst in Kauf genommen: Kommt die Farbe nicht durch, traegt
+// die Zeile die Mappe nicht mehr in Worten nach.
+export function packText(eintrag) {
+  if (!eintrag?.fach) return eintrag?.text ?? '';
+  return eintrag.farbe ? eintrag.fach : eintrag.fach + ': ' + eintrag.text;
+}
