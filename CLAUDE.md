@@ -11,6 +11,16 @@ Testdaten, auch nicht in Kommentaren, auch nicht "nur als Beispiel".
 
 Testdaten sind erfunden und sehen erfunden aus.
 
+**Eine benannte Ausnahme, entschieden von Thomas am 29.08.2026:** `icon.png`
+trägt die Buchstaben „KGS", also die Schulform. Das Symbol soll auf dem
+Home-Bildschirm erkennbar sein, und ein `apple-touch-icon` kann nur von hier
+kommen. Abgewogen wurde so: Eine Schulform ohne Ort weist auf keine bestimmte
+Schule, und wovor die Regel schützt, nämlich der Rückschluss auf das Kind,
+seine Fächer, Räume und Zeiten, bleibt unberührt. **Die Ausnahme gilt für
+dieses eine Bild und ist kein Präzedenzfall.** Für Text, Kommentare,
+Testdaten und Dateinamen gilt die Regel unverändert; sie wird nicht durch
+weitere Abwägungen im Einzelfall aufgeweicht.
+
 Der Grund: Die Seite zeigt den Stundenplan eines Kindes. Die Daten liegen an
 einem nicht auffindbaren Ort, und diese Ablage darf nicht der Wegweiser
 dorthin werden.
