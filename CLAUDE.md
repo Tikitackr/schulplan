@@ -28,6 +28,11 @@ etwas an der Logik ändern will, ist hier falsch.
 Im privaten Schwester-Projekt `untis-kalender`, in dessen `CLAUDE.md` und in
 `docs/spezifikation-tagesseite.md`. Diese Ablage führt keinen eigenen Stand.
 
+Die folgende Zeile sagt das dem Dashboard-Generator im Vault. Ohne sie meldet
+er hier einen fehlenden „Aktueller Stand"-Abschnitt, obwohl das Absicht ist.
+
+Stand-Quelle: ~/Projekte/untis-kalender/CLAUDE.md
+
 ## Prüfen
 
 `npm test`. Nach jeder Änderung.
