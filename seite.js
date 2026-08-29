@@ -103,3 +103,15 @@ export function packText(eintrag) {
   if (!eintrag?.fach) return eintrag?.text ?? '';
   return eintrag.farbe ? eintrag.fach : eintrag.fach + ': ' + eintrag.text;
 }
+
+// Der Ferienhinweis, etwa "Herbstferien in 24 Tagen". Er kommt fertig aus den
+// Daten: Gerechnet wird im privaten Projekt, hier steht nur die Anzeige.
+//
+// Er haengt am Tag und nicht an der Datei, weil die Seite blaettert - ein
+// Countdown von heute stuende auf jedem anderen Tag falsch da. Fehlt er,
+// verschwindet die Zeile. Das ist der Normalfall, wenn der Ferienabruf
+// ausgefallen ist, und besser als eine erfundene Zahl.
+export function ferienText(tag) {
+  const text = tag?.ferien;
+  return typeof text === 'string' && text !== '' ? text : null;
+}

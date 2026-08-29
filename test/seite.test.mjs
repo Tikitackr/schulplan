@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { quelleAusFragment } from '../seite.js';
+import { quelleAusFragment, ferienText } from '../seite.js';
 
 // Die Seite darf nur Adressen abrufen, die wie eine Gist-Kennung aussehen.
 // Sonst waere sie ein offener Abrufdienst fuer beliebige Adressen.
@@ -198,4 +198,19 @@ test('die Seite meldet sich, wenn sie haengen bleibt', () => {
   assert.match(html, /Wird geladen/);
   assert.match(html, /nicht vollständig geladen/,
     'ein ewiges "Wird geladen ..." sieht aus wie ein langsames Netz, ist aber ein Fehler');
+});
+
+// --- Ferienhinweis ---------------------------------------------------------
+// Der Satz kommt fertig aus den Daten, gerechnet wird er im privaten Projekt.
+// Hier steht nur, ob er brauchbar ist: Fehlt er, verschwindet die Zeile,
+// statt eine Luecke zu zeigen.
+
+test('der Ferienhinweis kommt aus den Daten', () => {
+  assert.equal(ferienText({ ferien: 'Herbstferien in 24 Tagen' }), 'Herbstferien in 24 Tagen');
+});
+
+test('ohne Ferienhinweis bleibt die Zeile weg', () => {
+  assert.equal(ferienText({}), null);
+  assert.equal(ferienText({ ferien: '' }), null);
+  assert.equal(ferienText(null), null);
 });

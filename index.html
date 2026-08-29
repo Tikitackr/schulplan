@@ -51,6 +51,9 @@
   button[disabled] { opacity: .35; cursor: default; }
   .hinweis { padding: 1rem; border: 1px solid var(--rand); border-radius: .7rem; }
   .stand { margin-top: 1.5rem; font-size: .85rem; opacity: .5; }
+  /* Steht direkt unter dem Datum und gehoert optisch dazu, deshalb der
+     negative Abstand nach oben. Leise: Es ist eine Randnotiz, keine Aufgabe. */
+  .ferien { margin: -.7rem 0 1.2rem; font-size: .9rem; opacity: .55; }
 </style>
 </head>
 <body>
@@ -75,7 +78,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel } from './seite.js?v=1';
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText } from './seite.js?v=2';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -138,6 +141,11 @@ function malen(daten, tage, datum, blaettern) {
 
   inhalt.appendChild(el('h1', null, new Date(datum + 'T12:00:00')
     .toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })));
+
+  // Direkt unter dem Datum, weil er sich darauf bezieht. Fehlt er, gibt es
+  // die Zeile nicht - kein Platzhalter, keine Luecke.
+  const ferien = ferienText(tag);
+  if (ferien) inhalt.appendChild(el('p', 'ferien', ferien));
 
   // Die Packliste steht oben: Sie ist der Zweck der Seite. Der Stundenplan
   // ist ihre Begruendung, nicht die Hauptsache.
