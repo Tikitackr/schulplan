@@ -76,3 +76,16 @@ export function packEintrag(roh) {
     : null;
   return { fach, text, farbe };
 }
+
+// Die zugeklappte Zeile soll sagen, wie lang der Tag wird. Die Anzahl der
+// Stunden taugt dafuer nicht: Doppelstunden stehen als ein Eintrag da, vier
+// Eintraege koennen ein kurzer oder ein langer Tag sein. Das Ende der letzten
+// stattfindenden Stunde sagt es - ausgerechnet wird es dort, wo die Daten
+// entstehen, nicht hier.
+const UHRZEIT = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export function stundenTitel(tag) {
+  const ende = tag?.ende;
+  if (typeof ende !== 'string' || !UHRZEIT.test(ende)) return 'Stundenplan';
+  return 'Stundenplan bis ' + ende;
+}

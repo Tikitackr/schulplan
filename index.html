@@ -54,7 +54,7 @@
 <body>
 <div id="inhalt"><p class="hinweis">Wird geladen …</p></div>
 <script type="module">
-import { quelleAusFragment, waehleTag, standText, packEintrag } from './seite.js';
+import { quelleAusFragment, waehleTag, standText, packEintrag, stundenTitel } from './seite.js';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -137,11 +137,11 @@ function malen(daten, tage, datum, blaettern) {
   // Beide Klappen stehen zu (ausdruecklicher Wunsch, 29.08.2026). Die
   // Packliste steht darueber offen da, und die ist der Zweck der Seite.
   if (tag.lessons.length === 0) {
-    inhalt.appendChild(el('h2', null, 'Stunden'));
+    inhalt.appendChild(el('h2', null, 'Stundenplan'));
     inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
   } else {
     const klappe = el('details');
-    klappe.appendChild(el('summary', null, 'Stunden (' + tag.lessons.length + ')'));
+    klappe.appendChild(el('summary', null, stundenTitel(tag)));
     for (const s of tag.lessons) {
       const zeile = el('div', 'zeile');
       zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));

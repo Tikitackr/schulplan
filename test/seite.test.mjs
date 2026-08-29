@@ -127,3 +127,27 @@ test('ein Fach, das kein Text ist, wird verworfen', () => {
   assert.equal(packEintrag({ fach: 42, text: 'etwas' }).fach, null);
   assert.equal(packEintrag({ fach: '', text: 'etwas' }).fach, null);
 });
+
+import { stundenTitel } from '../seite.js';
+
+// Die zugeklappte Zeile soll sagen, wie lang der Tag wird. Die Anzahl der
+// Stunden taugt dafuer nicht: Doppelstunden sind ein Eintrag. Das Ende der
+// letzten stattfindenden Stunde steht fertig in den Daten.
+
+test('der Titel nennt das Ende des Tages', () => {
+  assert.equal(stundenTitel({ ende: '13:20' }), 'Stundenplan bis 13:20');
+});
+
+test('ohne Ende bleibt es beim blossen Wort', () => {
+  // Aeltere Daten kennen das Feld nicht, und an einem Tag mit lauter
+  // ausgefallenen Stunden gibt es kein Ende.
+  assert.equal(stundenTitel({}), 'Stundenplan');
+  assert.equal(stundenTitel({ ende: '' }), 'Stundenplan');
+  assert.equal(stundenTitel(undefined), 'Stundenplan');
+});
+
+test('was keine Uhrzeit ist, wird nicht angezeigt', () => {
+  for (const unfug of ['heute', '25:99', 42, null, '13:20 Uhr']) {
+    assert.equal(stundenTitel({ ende: unfug }), 'Stundenplan', String(unfug));
+  }
+});
