@@ -20,9 +20,25 @@
           font-variant-numeric: tabular-nums; opacity: .75; }
   .raum { margin-left: auto; padding-left: .5rem; opacity: .55; }
   .aus { text-decoration: line-through; opacity: .5; }
-  .vertretung::after { content: " (Vertretung)"; opacity: .55; font-size: .9em; }
-  ul { margin: 0; padding-left: 1.3rem; }
+  /* Ausfall und Vertretung werden beide benannt, nicht nur gezeichnet: Eine
+     durchgestrichene Stunde allein erklaert sich nicht. Der Vermerk steht
+     bewusst in einem eigenen Feld, sonst liefe die Durchstreichung mit. */
+  .vermerk { opacity: .55; font-size: .9em; }
+  /* Ohne Aufzaehlungszeichen: Der Farbpunkt ist der Marker. Beides zusammen
+     sind zwei Marker in derselben Zeile. */
+  ul { margin: 0; padding: 0; list-style: none; }
   li { padding: .15rem 0; }
+  /* Eintraege ohne Farbe (Hefte, Zirkel, Sportzeug) ruecken auf dieselbe
+     Kante ein wie die mit Punkt, sonst steht die Liste treppenfoermig. */
+  li > .text { padding-left: 1.17em; }
+  /* Der Punkt traegt immer einen duennen Rand. Ohne ihn verschwindet
+     ausgerechnet die schwarze Mappe auf dunklem Grund. */
+  .punkt { display: inline-block; width: .72em; height: .72em; border-radius: 50%;
+           border: 1px solid var(--leise); margin-right: .45em; vertical-align: baseline; }
+  details { margin-top: 1.6rem; }
+  details > *:not(summary) { margin-top: .4rem; }
+  summary { font-size: .95rem; text-transform: uppercase; letter-spacing: .05em;
+            opacity: .55; cursor: pointer; }
   nav { display: flex; gap: .6rem; margin-top: 2rem; }
   button { flex: 1; padding: .8rem; font: inherit; border: 1px solid var(--rand);
            border-radius: .7rem; background: transparent; color: inherit;
@@ -35,7 +51,10 @@
 <body>
 <div id="inhalt"><p class="hinweis">Wird geladen …</p></div>
 <script type="module">
-import { quelleAusFragment, waehleTag, standText } from './seite.js';
+import { quelleAusFragment, waehleTag, standText, packEintrag } from './seite.js';
+
+// Beide Sonderfaelle werden benannt, in derselben Sprache.
+const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
 
 const inhalt = document.getElementById('inhalt');
 
@@ -92,42 +111,67 @@ function malen(daten, tage, datum, blaettern) {
   inhalt.appendChild(el('h1', null, new Date(datum + 'T12:00:00')
     .toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })));
 
-  inhalt.appendChild(el('h2', null, 'Stunden'));
-  if (tag.lessons.length === 0) {
-    inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
-  }
-  for (const s of tag.lessons) {
-    const zeile = el('div', 'zeile');
-    zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));
-    zeile.appendChild(el('span',
-      s.status === 'cancelled' ? 'aus' : s.status === 'substitution' ? 'vertretung' : null,
-      s.subject));
-    if (s.room) zeile.appendChild(el('span', 'raum', s.room));
-    inhalt.appendChild(zeile);
-  }
-
+  // Die Packliste steht oben: Sie ist der Zweck der Seite. Der Stundenplan
+  // ist ihre Begruendung, nicht die Hauptsache.
   inhalt.appendChild(el('h2', null, 'Einpacken'));
-  const stuecke = tag.packliste || [];
+  const stuecke = (tag.packliste || []).map(packEintrag).filter(Boolean);
   if (stuecke.length === 0) {
     inhalt.appendChild(el('p', null, 'Nichts Besonderes.'));
   } else {
     const liste = el('ul');
-    for (const stueck of stuecke) liste.appendChild(el('li', null, stueck));
+    for (const stueck of stuecke) {
+      const zeile = el('li');
+      if (stueck.farbe) {
+        const punkt = el('span', 'punkt');
+        punkt.style.background = stueck.farbe;
+        zeile.appendChild(punkt);
+      }
+      zeile.appendChild(el('span', stueck.farbe ? null : 'text', stueck.text));
+      liste.appendChild(zeile);
+    }
     inhalt.appendChild(liste);
+  }
+
+  // Die Stunden stehen aufgeklappt. Zugeklappt waere die Seite kuerzer, aber
+  // eine ausgefallene Stunde ist der Grund, warum ein Fach nicht in der
+  // Packliste steht - versteckt sieht die fehlende Mappe wie ein Fehler aus.
+  if (tag.lessons.length === 0) {
+    inhalt.appendChild(el('h2', null, 'Stunden'));
+    inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
+  } else {
+    const klappe = el('details');
+    klappe.open = true;
+    klappe.appendChild(el('summary', null, 'Stunden (' + tag.lessons.length + ')'));
+    for (const s of tag.lessons) {
+      const zeile = el('div', 'zeile');
+      zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));
+      zeile.appendChild(el('span', s.status === 'cancelled' ? 'aus' : null, s.subject));
+      const vermerk = VERMERK[s.status];
+      if (vermerk) zeile.appendChild(el('span', 'vermerk', vermerk));
+      if (s.room) zeile.appendChild(el('span', 'raum', s.room));
+      klappe.appendChild(zeile);
+    }
+    inhalt.appendChild(klappe);
   }
 
   const offen = (daten.homework || [])
     .filter(a => !a.completed && a.due >= datum)
     .sort((a, b) => a.due.localeCompare(b.due));
-  inhalt.appendChild(el('h2', null, 'Hausaufgaben'));
+  // Zugeklappt, mit der Anzahl im Titel: Fuenf Aufgaben mit vollem Text sind
+  // der halbe Bildschirm. Das Signal entsteht aus der Zahl, ohne Deko.
   if (offen.length === 0) {
+    inhalt.appendChild(el('h2', null, 'Hausaufgaben'));
     inhalt.appendChild(el('p', null, 'Keine offenen Aufgaben.'));
-  }
-  for (const a of offen) {
-    const zeile = el('div', 'zeile');
-    zeile.appendChild(el('span', 'zeit', 'bis ' + a.due.slice(8) + '.' + a.due.slice(5, 7) + '.'));
-    zeile.appendChild(el('span', null, (a.subject ? a.subject + ': ' : '') + a.text));
-    inhalt.appendChild(zeile);
+  } else {
+    const klappe = el('details');
+    klappe.appendChild(el('summary', null, 'Hausaufgaben (' + offen.length + ')'));
+    for (const a of offen) {
+      const zeile = el('div', 'zeile');
+      zeile.appendChild(el('span', 'zeit', 'bis ' + a.due.slice(8) + '.' + a.due.slice(5, 7) + '.'));
+      zeile.appendChild(el('span', null, (a.subject ? a.subject + ': ' : '') + a.text));
+      klappe.appendChild(zeile);
+    }
+    inhalt.appendChild(klappe);
   }
 
   const i = tage.indexOf(datum);

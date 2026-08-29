@@ -48,3 +48,26 @@ export function standText(generated) {
   const [, jahr, monat, tag, stunde, minute] = m;
   return `${tag}.${monat}.${jahr}, ${stunde}:${minute} Uhr`;
 }
+
+// Ein Punkt in der Farbe der Mappe steht vor dem Text: Die Farbe ist die
+// eigentliche Information, und ein Fuenftklaessler am Morgen sieht schneller
+// als er liest. Sie kommt fertig aus den Daten, weil in dieser oeffentlichen
+// Ablage kein Mappenname stehen darf - die Seite koennte sie also nicht aus
+// dem Text ableiten.
+//
+// Geprueft wird streng, aus demselben Grund wie bei der Kennung oben: Der
+// Wert landet in einer Stilangabe. Ungeprueft waere die Darstellung ein Ziel
+// fuer alles, was in den Daten steht. Was die Pruefung nicht besteht, bekommt
+// keinen Punkt statt einen falschen.
+const FARBWERT = /^#[0-9a-f]{6}$/;
+
+export function packEintrag(roh) {
+  // Die aeltere Fassung der Daten fuehrte die Packliste als blosse Texte.
+  const eintrag = typeof roh === 'string' ? { text: roh } : roh;
+  const text = eintrag?.text;
+  if (typeof text !== 'string' || text === '') return null;
+  const farbe = typeof eintrag.farbe === 'string' && FARBWERT.test(eintrag.farbe)
+    ? eintrag.farbe
+    : null;
+  return { text, farbe };
+}

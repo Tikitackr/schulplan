@@ -74,3 +74,38 @@ test('ohne Zeitstempel gibt es keine Zeile', () => {
   assert.equal(standText(''), null);
   assert.equal(standText('kaputt'), null);
 });
+
+import { packEintrag } from '../seite.js';
+
+// Ein Packlisten-Eintrag kommt aus den Daten als { text } und, wo es eine
+// Mappe ist, zusaetzlich als { farbe }. Die Farbe wird zu einem Punkt vor dem
+// Text. Was nicht wie ein Farbwert aussieht, wird nicht gezeichnet: Sonst
+// stuende ein Wert aus den Daten ungeprueft in der Darstellung.
+
+test('ein Eintrag mit Farbe ergibt Text und Farbe', () => {
+  assert.deepEqual(packEintrag({ text: 'etwas', farbe: '#abcdef' }),
+                   { text: 'etwas', farbe: '#abcdef' });
+});
+
+test('ein Eintrag ohne Farbe bekommt keinen Punkt', () => {
+  assert.deepEqual(packEintrag({ text: 'etwas' }), { text: 'etwas', farbe: null });
+});
+
+test('ein blosser Text bleibt lesbar', () => {
+  // Die aeltere Fassung der Daten fuehrte die Packliste als Texte. Zwischen
+  // einer neuen Seite und dem naechsten stuendlichen Lauf liegt sonst eine
+  // Stunde mit leerer Liste.
+  assert.deepEqual(packEintrag('etwas'), { text: 'etwas', farbe: null });
+});
+
+test('was kein Farbwert ist, wird nicht gezeichnet', () => {
+  for (const unfug of ['rot', '#abc', '#ABCDEF', 'red; background: url(x)', '#abcdefg', 42, null]) {
+    assert.equal(packEintrag({ text: 'etwas', farbe: unfug }).farbe, null, String(unfug));
+  }
+});
+
+test('ein Eintrag ohne Text ergibt nichts', () => {
+  assert.equal(packEintrag({}), null);
+  assert.equal(packEintrag(''), null);
+  assert.equal(packEintrag(undefined), null);
+});
