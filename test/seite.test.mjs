@@ -214,6 +214,16 @@ test('die Seite baut aus den Details ein Ausklappmenue', () => {
   assert.doesNotMatch(html, /packText/, 'die alte Textzeile gibt es nicht mehr');
 });
 
+// Am Geraet gesehen (30.08.2026): Das eingebaute Dreieck sitzt vor dem Wort
+// und schiebt die Zeile nach rechts. Zwischen "Sportsachen" und "Deutsch",
+// die beide in der Punkt-Spalte beginnen, stand "Mathematik" versetzt.
+test('der Pfeil der Packliste steht hinter dem Wort', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /details\.pack > summary::after/);
+  assert.match(html, /details\.pack > summary::-webkit-details-marker \{ display: none; \}/);
+  assert.match(html, /list-style: none/);
+});
+
 test('die Seite holt ihre Aufgabenliste aus dem Modul', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /offeneAufgaben\(daten\.homework, datum\)/);

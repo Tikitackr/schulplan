@@ -45,7 +45,16 @@
      dieselbe Schrift wie ihre Nachbarn, kein Abstand, keine Versalien. */
   details.pack { margin-top: 0; }
   details.pack > summary { font-size: inherit; text-transform: none;
-                           letter-spacing: normal; opacity: 1; }
+                           letter-spacing: normal; opacity: 1;
+                           list-style: none; }
+  /* Der eigene Pfeil steht hinter dem Wort. Das eingebaute Dreieck sitzt
+     davor und schoebe die Zeile nach rechts - sie stuende dann versetzt
+     zwischen ihren Nachbarn, die in der Punkt-Spalte beginnen. */
+  details.pack > summary::-webkit-details-marker { display: none; }
+  details.pack > summary::after { content: '▸'; display: inline-block;
+                                  margin-left: .4em; opacity: .5;
+                                  transition: transform .15s; }
+  details.pack[open] > summary::after { transform: rotate(90deg); }
   .pack-details { margin-top: .1rem; font-size: .9rem; opacity: .6; }
   details > *:not(summary) { margin-top: .4rem; }
   summary { font-size: .95rem; text-transform: uppercase; letter-spacing: .05em;
