@@ -172,6 +172,9 @@ test('ohne Fach bleibt das Stueck fuer sich', () => {
   // Aeltere Daten kennen kein Fach. Dann faellt nichts weg, auch bei Farbe
   // nicht - sonst stuende dort gar nichts.
   assert.equal(packText({ fach: null, text: 'rote Mappe', farbe: '#e03131' }), 'rote Mappe');
+  // Genau das liefert der Generator seit dem 30.08.2026 fuer Sportsachen: ein
+  // leeres Fach, kein fehlendes. Beides muss dieselbe Zeile ergeben.
+  assert.equal(packText({ fach: '', text: 'Sportsachen' }), 'Sportsachen');
   assert.equal(packText({ fach: null, text: 'Zirkel', farbe: null }), 'Zirkel');
 });
 
