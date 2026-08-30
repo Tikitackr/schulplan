@@ -69,7 +69,7 @@ export function packEintrag(roh) {
   const farbe = typeof eintrag.farbe === 'string' && FARBWERT.test(eintrag.farbe)
     ? eintrag.farbe
     : null;
-  // Das Fach steht vor dem Stueck: "Englisch: rote Mappe". Wer das liest,
+  // Das Fach steht vor dem Stueck: "Fach A: rote Mappe". Wer das liest,
   // merkt sich die Farbe zum Fach. Aeltere Daten kennen kein Fach.
   const fach = typeof eintrag.fach === 'string' && eintrag.fach !== ''
     ? eintrag.fach
@@ -93,7 +93,7 @@ export function stundenTitel(tag) {
 // Was in der Zeile der Packliste steht.
 //
 // Traegt der Eintrag eine Farbe, ist es eine Mappe. Dann sagt der Punkt die
-// Farbe, und "Englisch: rote Mappe" saehe dieselbe Angabe zweimal. Es bleibt
+// Farbe, und "Fach A: rote Mappe" saehe dieselbe Angabe zweimal. Es bleibt
 // beim Fach. Ohne Farbe (Hefte, Zirkel, Sportzeug) ist das Stueck die
 // eigentliche Angabe und steht hinter dem Fach.
 //

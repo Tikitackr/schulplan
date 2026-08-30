@@ -110,12 +110,12 @@ test('ein Eintrag ohne Text ergibt nichts', () => {
   assert.equal(packEintrag(undefined), null);
 });
 
-// Vor dem Stueck steht das Fach ("Englisch: rote Mappe"): Die Paarung ist der
+// Vor dem Stueck steht das Fach ("Fach A: rote Mappe"): Die Paarung ist der
 // Lerneffekt. Aeltere Daten kennen kein Fach, dann steht nur das Stueck da.
 
 test('das Fach kommt mit', () => {
-  assert.deepEqual(packEintrag({ fach: 'Englisch', text: 'etwas', farbe: '#abcdef' }),
-                   { fach: 'Englisch', text: 'etwas', farbe: '#abcdef' });
+  assert.deepEqual(packEintrag({ fach: 'Fach A', text: 'etwas', farbe: '#abcdef' }),
+                   { fach: 'Fach A', text: 'etwas', farbe: '#abcdef' });
 });
 
 test('ohne Fach bleibt das Stueck fuer sich', () => {
@@ -159,13 +159,13 @@ import { packText } from '../seite.js';
 // Angabe ein zweites Mal. Ohne Farbe ist das Stueck die eigentliche Angabe.
 
 test('eine Mappe zeigt nur ihr Fach, die Farbe sagt der Punkt', () => {
-  assert.equal(packText({ fach: 'Englisch', text: 'rote Mappe', farbe: '#e03131' }),
-               'Englisch');
+  assert.equal(packText({ fach: 'Fach A', text: 'rote Mappe', farbe: '#e03131' }),
+               'Fach A');
 });
 
 test('ohne Farbe steht das Stueck hinter dem Fach', () => {
-  assert.equal(packText({ fach: 'Sport', text: 'T-Shirt, Hose', farbe: null }),
-               'Sport: T-Shirt, Hose');
+  assert.equal(packText({ fach: 'Fach B', text: 'ein Beutel', farbe: null }),
+               'Fach B: ein Beutel');
 });
 
 test('ohne Fach bleibt das Stueck fuer sich', () => {
