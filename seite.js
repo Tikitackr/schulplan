@@ -116,14 +116,25 @@ export function ferienText(tag) {
   return typeof text === 'string' && text !== '' ? text : null;
 }
 
-// Der Terminhinweis, etwa "In 2 Tagen (31.8.): Englisch, Vokabeltest…". Er
-// entsteht im privaten Projekt aus dem Freitext der Hausaufgaben - die
-// einzige Stelle, die raet. Deshalb nennt der Satz das erkannte Datum: So
+// Die Terminhinweise, etwa "In 2 Tagen (31.8.): Fach A, Probe…". Sie
+// entstehen im privaten Projekt aus dem Freitext der Hausaufgaben - die
+// einzige Stelle, die raet. Deshalb nennt jeder Satz das erkannte Datum: So
 // sieht man in einer Sekunde, ob die Erkennung recht hat.
 //
-// Fehlt er, gibt es die Zeile nicht. Das ist der Normalfall - die meisten
+// Es koennen mehrere sein, der naechste zuerst. Die Reihenfolge kommt fertig
+// aus den Daten; hier wird nicht sortiert, wie hier ueberhaupt nichts
+// gerechnet wird.
+//
+// Das Feld 'termin' mit einem einzelnen Satz ist die vorige Fassung. Es wird
+// weiter gelesen, weil der Gist nach einer Aenderung noch bis zu einer Stunde
+// die alte Datei ausliefert - in diesem Fenster wuerde die Zeile sonst
+// verschwinden.
+//
+// Fehlt beides, gibt es die Zeile nicht. Das ist der Normalfall - die meisten
 // Aufgaben nennen kein Datum.
-export function terminText(tag) {
-  const text = tag?.termin;
-  return typeof text === 'string' && text !== '' ? text : null;
+export function terminTexte(tag) {
+  const satz = t => typeof t === 'string' && t !== '';
+  const liste = tag?.termine;
+  if (Array.isArray(liste)) return liste.filter(satz);
+  return satz(tag?.termin) ? [tag.termin] : [];
 }

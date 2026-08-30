@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { quelleAusFragment, ferienText, terminText } from '../seite.js';
+import { quelleAusFragment, ferienText, terminTexte } from '../seite.js';
 
 // Die Seite darf nur Adressen abrufen, die wie eine Gist-Kennung aussehen.
 // Sonst waere sie ein offener Abrufdienst fuer beliebige Adressen.
@@ -193,6 +193,17 @@ test('die Seite laedt ihr Skript mit einer Fassungskennung', () => {
     'ohne ?v=N kann ein Geraet eine alte seite.js mit einer neuen Seite mischen');
 });
 
+// Die Naht zwischen Modul und Seite: seite.test.mjs prueft die Funktion,
+// niemand prueft, ob index.html sie auch aufruft. Am 30.08.2026 wurde
+// terminText zu terminTexte - ein vergessener Aufrufer waere hier still
+// geblieben und haette die Terminzeile verschwinden lassen.
+test('die Seite ruft die Terminzeilen auch auf', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /terminTexte\(tag\)/);
+  assert.doesNotMatch(html, /terminText\(/,
+    'die alte Einzahl-Funktion gibt es nicht mehr');
+});
+
 test('die Seite meldet sich, wenn sie haengen bleibt', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /Wird geladen/);
@@ -215,13 +226,34 @@ test('ohne Ferienhinweis bleibt die Zeile weg', () => {
   assert.equal(ferienText(null), null);
 });
 
-test('der Terminhinweis kommt aus den Daten', () => {
-  assert.equal(terminText({ termin: 'In 2 Tagen (31.8.): Englisch, Vokabeltest' }),
-    'In 2 Tagen (31.8.): Englisch, Vokabeltest');
+// Mehrere Termine kommen als Liste. Die Reihenfolge macht die Daten:
+// Der naechste steht vorn, die Seite rechnet nichts nach und sortiert nicht
+// um. Sie zeigt sie in der Reihenfolge, in der sie ankommen.
+test('mehrere Termine kommen in der gelieferten Reihenfolge', () => {
+  assert.deepEqual(
+    terminTexte({ termine: ['Heute (1.1.): Fach A, Probe', 'Morgen (2.1.): Fach B, Ausflug'] }),
+    ['Heute (1.1.): Fach A, Probe', 'Morgen (2.1.): Fach B, Ausflug']);
 });
 
-test('ohne Terminhinweis bleibt die Zeile weg', () => {
-  assert.equal(terminText({}), null);
-  assert.equal(terminText({ termin: '' }), null);
-  assert.equal(terminText(null), null);
+// Solange der Gist noch die vorige Fassung ausliefert, steht dort ein
+// einzelner Satz im Feld 'termin'. Die Seite muss beides vertragen, sonst
+// bricht die Anzeige in dem Fenster zwischen zwei Auslieferungen.
+test('ein einzelner Termin aus der alten Fassung wird zur Liste', () => {
+  assert.deepEqual(terminTexte({ termin: 'Heute (1.1.): Fach A, Probe' }),
+    ['Heute (1.1.): Fach A, Probe']);
+});
+
+test('ohne Termin bleibt die Zeile weg', () => {
+  assert.deepEqual(terminTexte({}), []);
+  assert.deepEqual(terminTexte({ termine: [] }), []);
+  assert.deepEqual(terminTexte({ termin: '' }), []);
+  assert.deepEqual(terminTexte(null), []);
+});
+
+// Was nicht wie ein Satz aussieht, wird nicht gezeigt. Die Daten kommen von
+// woanders her, und die Seite prueft, was sie zeichnet.
+test('leere und fremde Eintraege fallen aus der Liste', () => {
+  assert.deepEqual(terminTexte({ termine: ['Heute (1.1.): Fach A, Probe', '', null, 42, {}] }),
+    ['Heute (1.1.): Fach A, Probe']);
+  assert.deepEqual(terminTexte({ termine: 'kein Feld fuer einen Satz' }), []);
 });

@@ -57,7 +57,9 @@
   /* Der Termin steht kraeftiger da als der Ferienhinweis: Er ist eine
      Ansage, keine Randnotiz. Kein eigener Farbton - die Seite kommt ohne
      Ampelfarben aus, und ein roter Kasten am Morgen macht Druck. */
-  .termin { margin: -.7rem 0 .3rem; font-size: .95rem; opacity: .8; }
+  .termin { margin: -.7rem 0 .3rem; font-size: .95rem; opacity: .6; }
+  .termin-naechster { opacity: .9; }
+  .termin + .termin { margin-top: 0; }
   .termin + .ferien { margin-top: 0; }
 </style>
 </head>
@@ -83,7 +85,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminText } from './seite.js?v=3';
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminTexte } from './seite.js?v=4';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -151,8 +153,12 @@ function malen(daten, tage, datum, blaettern) {
   // die Zeile nicht - kein Platzhalter, keine Luecke.
   // Der Termin steht ueber den Ferien: Ein Vokabeltest in zwei Tagen ist
   // dringender als ein Countdown.
-  const termin = terminText(tag);
-  if (termin) inhalt.appendChild(el('p', 'termin', termin));
+  // Eine Zeile je Termin, der naechste zuerst. Die Rangfolge steht schon im
+  // Satz ("Heute", "Morgen", "In 4 Tagen"); die Reihenfolge und die kraeftigere
+  // erste Zeile machen sie ohne Lesen sichtbar.
+  terminTexte(tag).forEach((satz, i) => {
+    inhalt.appendChild(el('p', i === 0 ? 'termin termin-naechster' : 'termin', satz));
+  });
 
   const ferien = ferienText(tag);
   if (ferien) inhalt.appendChild(el('p', 'ferien', ferien));
