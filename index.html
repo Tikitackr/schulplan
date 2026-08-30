@@ -41,6 +41,12 @@
      sonst stuende die Liste treppenfoermig. */
   .punkt.leer { border-color: transparent; }
   details { margin-top: 1.6rem; }
+  /* Die Klappe in der Packliste ist keine Ueberschrift, sondern eine Zeile:
+     dieselbe Schrift wie ihre Nachbarn, kein Abstand, keine Versalien. */
+  details.pack { margin-top: 0; }
+  details.pack > summary { font-size: inherit; text-transform: none;
+                           letter-spacing: normal; opacity: 1; }
+  .pack-details { margin-top: .1rem; font-size: .9rem; opacity: .6; }
   details > *:not(summary) { margin-top: .4rem; }
   summary { font-size: .95rem; text-transform: uppercase; letter-spacing: .05em;
             opacity: .55; cursor: pointer; }
@@ -85,7 +91,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminTexte, offeneAufgaben } from './seite.js?v=6';
+import { quelleAusFragment, waehleTag, standText, packEintrag, stundenTitel, ferienText, terminTexte, offeneAufgaben } from './seite.js?v=7';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -176,7 +182,18 @@ function malen(daten, tage, datum, blaettern) {
       const punkt = el('span', stueck.farbe ? 'punkt' : 'punkt leer');
       if (stueck.farbe) punkt.style.background = stueck.farbe;
       zeile.appendChild(punkt);
-      zeile.appendChild(el('span', null, packText(stueck)));
+      // In der Liste steht das Fach. Was genau einzupacken ist, versteckt
+      // sich dahinter - sonst ueberdeckt eine Zeile wie die von Mathe die
+      // ganze Liste. Wo es nichts zu verbergen gibt, bleibt es beim Wort:
+      // ein Pfeil ohne Inhalt waere ein leeres Versprechen.
+      if (stueck.details) {
+        const klappe = el('details', 'pack');
+        klappe.appendChild(el('summary', null, stueck.titel));
+        klappe.appendChild(el('div', 'pack-details', stueck.details));
+        zeile.appendChild(klappe);
+      } else {
+        zeile.appendChild(el('span', null, stueck.titel));
+      }
       liste.appendChild(zeile);
     }
     inhalt.appendChild(liste);

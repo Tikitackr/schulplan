@@ -94,56 +94,59 @@ test('ohne Zeitstempel gibt es keine Zeile', () => {
 
 import { packEintrag } from '../seite.js';
 
-// Ein Packlisten-Eintrag kommt aus den Daten als { text } und, wo es eine
-// Mappe ist, zusaetzlich als { farbe }. Die Farbe wird zu einem Punkt vor dem
-// Text. Was nicht wie ein Farbwert aussieht, wird nicht gezeichnet: Sonst
-// stuende ein Wert aus den Daten ungeprueft in der Darstellung.
+// Eine Zeile der Packliste seit dem 30.08.2026: { titel } und, wo etwas zu
+// verbergen ist, { text } als Details fuer ein Ausklappmenue. Anlass war die
+// Mathe-Zeile - vier Gegenstaende mit Lineaturangaben, die die Liste unlesbar
+// machten. In der Liste stehen jetzt nur die Faecher.
+//
+// Eine Mappe bekommt kein Menue: Der Punkt sagt die Farbe, mehr steckt nicht
+// dahinter. Ein Pfeil, hinter dem nichts steht, ist ein leeres Versprechen.
 
-test('ein Eintrag mit Farbe ergibt Text und Farbe', () => {
-  assert.deepEqual(packEintrag({ text: 'etwas', farbe: '#abcdef' }),
-                   { fach: null, text: 'etwas', farbe: '#abcdef' });
+test('eine Mappe zeigt nur ihr Fach, die Farbe sagt der Punkt', () => {
+  assert.deepEqual(packEintrag({ titel: 'Fach A', text: 'rote Mappe', farbe: '#e03131' }),
+                   { titel: 'Fach A', details: null, farbe: '#e03131' });
 });
 
-test('ein Eintrag ohne Farbe bekommt keinen Punkt', () => {
-  assert.deepEqual(packEintrag({ text: 'etwas' }), { fach: null, text: 'etwas', farbe: null });
+test('mehrere Gegenstaende stehen als Details hinter dem Fach', () => {
+  assert.deepEqual(packEintrag({ titel: 'Fach B', text: 'Heft A4, Heft A5, Zirkel' }),
+                   { titel: 'Fach B', details: 'Heft A4, Heft A5, Zirkel', farbe: null });
 });
 
-test('ein blosser Text bleibt lesbar', () => {
-  // Die aeltere Fassung der Daten fuehrte die Packliste als Texte. Zwischen
-  // einer neuen Seite und dem naechsten stuendlichen Lauf liegt sonst eine
-  // Stunde mit leerer Liste.
-  assert.deepEqual(packEintrag('etwas'), { fach: null, text: 'etwas', farbe: null });
+test('ein Titel ohne Details bekommt kein Menue', () => {
+  assert.deepEqual(packEintrag({ titel: 'Sportsachen' }),
+                   { titel: 'Sportsachen', details: null, farbe: null });
 });
 
-test('was kein Farbwert ist, wird nicht gezeichnet', () => {
-  for (const unfug of ['rot', '#abc', '#ABCDEF', 'red; background: url(x)', '#abcdefg', 42, null]) {
-    assert.equal(packEintrag({ text: 'etwas', farbe: unfug }).farbe, null, String(unfug));
-  }
+// Solange der Gist die vorige Fassung ausliefert, heisst das Feld 'fach', und
+// wo keines gesetzt war, stand der Titel im Text. Ohne Rueckfall waere die
+// Packliste im Fenster zwischen zwei Auslieferungen leer.
+test('die vorigen Fassungen werden weiter gelesen', () => {
+  assert.deepEqual(packEintrag({ fach: 'Fach B', text: 'Heft A4, Zirkel' }),
+                   { titel: 'Fach B', details: 'Heft A4, Zirkel', farbe: null });
+  assert.deepEqual(packEintrag({ fach: 'Fach A', text: 'rote Mappe', farbe: '#e03131' }),
+                   { titel: 'Fach A', details: null, farbe: '#e03131' });
+  assert.deepEqual(packEintrag({ fach: '', text: 'Sportsachen' }),
+                   { titel: 'Sportsachen', details: null, farbe: null });
+  assert.deepEqual(packEintrag('Sportsachen'),
+                   { titel: 'Sportsachen', details: null, farbe: null });
 });
 
-test('ein Eintrag ohne Text ergibt nichts', () => {
+test('was keinen Titel hat, wird nicht gezeigt', () => {
   assert.equal(packEintrag({}), null);
+  assert.equal(packEintrag({ titel: '' }), null);
   assert.equal(packEintrag(''), null);
   assert.equal(packEintrag(undefined), null);
 });
 
-// Vor dem Stueck steht das Fach ("Fach A: rote Mappe"): Die Paarung ist der
-// Lerneffekt. Aeltere Daten kennen kein Fach, dann steht nur das Stueck da.
-
-test('das Fach kommt mit', () => {
-  assert.deepEqual(packEintrag({ fach: 'Fach A', text: 'etwas', farbe: '#abcdef' }),
-                   { fach: 'Fach A', text: 'etwas', farbe: '#abcdef' });
+test('was kein Farbwert ist, wird nicht gezeichnet', () => {
+  // Die Farbe kommt aus den Daten und wird gezeichnet - also streng geprueft,
+  // sonst waere die Darstellung ein Ziel fuer alles, was dort steht.
+  for (const unfug of ['rot', '#abc', '#ABCDEF', 'red; background: url(x)', 42, null]) {
+    assert.equal(packEintrag({ titel: 'Fach A', text: 'x', farbe: unfug }).farbe, null,
+                 String(unfug));
+  }
 });
 
-test('ohne Fach bleibt das Stueck fuer sich', () => {
-  assert.equal(packEintrag({ text: 'etwas' }).fach, null);
-  assert.equal(packEintrag('etwas').fach, null);
-});
-
-test('ein Fach, das kein Text ist, wird verworfen', () => {
-  assert.equal(packEintrag({ fach: 42, text: 'etwas' }).fach, null);
-  assert.equal(packEintrag({ fach: '', text: 'etwas' }).fach, null);
-});
 
 import { stundenTitel } from '../seite.js';
 
@@ -169,31 +172,6 @@ test('was keine Uhrzeit ist, wird nicht angezeigt', () => {
   }
 });
 
-import { packText } from '../seite.js';
-
-// Was in der Zeile steht. Traegt der Eintrag eine Farbe, ist es eine Mappe -
-// dann sagt der Punkt die Farbe und das Wort "rote Mappe" waere dieselbe
-// Angabe ein zweites Mal. Ohne Farbe ist das Stueck die eigentliche Angabe.
-
-test('eine Mappe zeigt nur ihr Fach, die Farbe sagt der Punkt', () => {
-  assert.equal(packText({ fach: 'Fach A', text: 'rote Mappe', farbe: '#e03131' }),
-               'Fach A');
-});
-
-test('ohne Farbe steht das Stueck hinter dem Fach', () => {
-  assert.equal(packText({ fach: 'Fach B', text: 'ein Beutel', farbe: null }),
-               'Fach B: ein Beutel');
-});
-
-test('ohne Fach bleibt das Stueck fuer sich', () => {
-  // Aeltere Daten kennen kein Fach. Dann faellt nichts weg, auch bei Farbe
-  // nicht - sonst stuende dort gar nichts.
-  assert.equal(packText({ fach: null, text: 'rote Mappe', farbe: '#e03131' }), 'rote Mappe');
-  // Genau das liefert der Generator seit dem 30.08.2026 fuer Sportsachen: ein
-  // leeres Fach, kein fehlendes. Beides muss dieselbe Zeile ergeben.
-  assert.equal(packText({ fach: '', text: 'Sportsachen' }), 'Sportsachen');
-  assert.equal(packText({ fach: null, text: 'Zirkel', farbe: null }), 'Zirkel');
-});
 
 import { readFileSync } from 'node:fs';
 
@@ -222,6 +200,18 @@ test('die Seite ruft die Terminzeilen auch auf', () => {
   assert.match(html, /terminTexte\(tag\)/);
   assert.doesNotMatch(html, /terminText\(/,
     'die alte Einzahl-Funktion gibt es nicht mehr');
+});
+
+// Die Naht zur Packliste: Das Modul liefert titel und details, aber ob die
+// Seite daraus ein Menue baut, sieht kein Modultest.
+test('die Seite baut aus den Details ein Ausklappmenue', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  // Textpruefung, keine Verhaltenspruefung: Es gibt hier kein DOM. Die
+  // Bedingung steht deshalb woertlich in der Erwartung - sonst bliebe der
+  // Test gruen, wenn jemand sie auf 'false' setzt (Mutationsprobe 30.08.2026).
+  assert.match(html, /if \(stueck\.details\) \{/);
+  assert.match(html, /el\('summary', null, stueck\.titel\)/);
+  assert.doesNotMatch(html, /packText/, 'die alte Textzeile gibt es nicht mehr');
 });
 
 test('die Seite holt ihre Aufgabenliste aus dem Modul', () => {

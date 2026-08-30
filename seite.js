@@ -70,19 +70,50 @@ export function standText(generated) {
 const FARBWERT = /^#[0-9a-f]{6}$/;
 
 export function packEintrag(roh) {
-  // Die aeltere Fassung der Daten fuehrte die Packliste als blosse Texte.
-  const eintrag = typeof roh === 'string' ? { text: roh } : roh;
-  const text = eintrag?.text;
-  if (typeof text !== 'string' || text === '') return null;
+  // Drei Fassungen der Daten treffen hier aufeinander, und alle drei muessen
+  // lesbar bleiben: Der Gist liefert nach einer Aenderung noch bis zum
+  // naechsten stuendlichen Lauf die vorige Datei.
+  //   heute    { titel, text?, farbe? }
+  //   vorher   { fach, text, farbe? }   - Sport trug ein leeres Fach
+  //   ganz alt 'ein blosser Text'
+  const eintrag = typeof roh === 'string' ? { titel: roh } : roh;
+  const wort = w => (typeof w === 'string' && w !== '' ? w : null);
+
+  // Der Titel steht in der Liste. Wo die vorige Fassung kein Fach kannte,
+  // war der Text selbst die Zeile - dann ist er der Titel.
+  const neueFassung = eintrag?.titel !== undefined;
+  const titel = neueFassung
+    ? wort(eintrag.titel)
+    : wort(eintrag?.fach) || wort(eintrag?.text);
+  if (!titel) return null;
+
   const farbe = typeof eintrag.farbe === 'string' && FARBWERT.test(eintrag.farbe)
     ? eintrag.farbe
     : null;
-  // Das Fach steht vor dem Stueck: "Fach A: rote Mappe". Wer das liest,
-  // merkt sich die Farbe zum Fach. Aeltere Daten kennen kein Fach.
-  const fach = typeof eintrag.fach === 'string' && eintrag.fach !== ''
-    ? eintrag.fach
-    : null;
-  return { fach, text, farbe };
+
+  // Eine Mappe bekommt kein Menue: Der Punkt sagt die Farbe, mehr steckt
+  // nicht dahinter. Ein Pfeil, hinter dem nichts steht, ist ein leeres
+  // Versprechen.
+  // Wo der Text schon der Titel ist (Sport in der vorigen Fassung, ein
+  // blosser Text), gibt es nichts zu verbergen. Eine zusaetzliche Abfrage auf
+  // die Fassung waere toter Code - die Mutationsprobe hat das am 30.08.2026
+  // gezeigt: Sie blieb gruen, weil dieser Vergleich denselben Fall schon
+  // abfaengt.
+  const roher = wort(eintrag?.text);
+  const details = farbe || roher === titel ? null : roher;
+  return { titel, details, farbe };
+}
+
+// Der Ferienhinweis, etwa "Herbstferien in 24 Tagen". Er kommt fertig aus den
+// Daten: Gerechnet wird im privaten Projekt, hier steht nur die Anzeige.
+//
+// Er haengt am Tag und nicht an der Datei, weil die Seite blaettert - ein
+// Countdown von heute stuende auf jedem anderen Tag falsch da. Fehlt er,
+// verschwindet die Zeile. Das ist der Normalfall, wenn der Ferienabruf
+// ausgefallen ist, und besser als eine erfundene Zahl.
+export function ferienText(tag) {
+  const text = tag?.ferien;
+  return typeof text === 'string' && text !== '' ? text : null;
 }
 
 // Die zugeklappte Zeile soll sagen, wie lang der Tag wird. Die Anzahl der
@@ -96,32 +127,6 @@ export function stundenTitel(tag) {
   const ende = tag?.ende;
   if (typeof ende !== 'string' || !UHRZEIT.test(ende)) return 'Stundenplan';
   return 'Stundenplan bis ' + ende;
-}
-
-// Was in der Zeile der Packliste steht.
-//
-// Traegt der Eintrag eine Farbe, ist es eine Mappe. Dann sagt der Punkt die
-// Farbe, und "Fach A: rote Mappe" saehe dieselbe Angabe zweimal. Es bleibt
-// beim Fach. Ohne Farbe (Hefte, Zirkel, Sportzeug) ist das Stueck die
-// eigentliche Angabe und steht hinter dem Fach.
-//
-// Der Preis ist bewusst in Kauf genommen: Kommt die Farbe nicht durch, traegt
-// die Zeile die Mappe nicht mehr in Worten nach.
-export function packText(eintrag) {
-  if (!eintrag?.fach) return eintrag?.text ?? '';
-  return eintrag.farbe ? eintrag.fach : eintrag.fach + ': ' + eintrag.text;
-}
-
-// Der Ferienhinweis, etwa "Herbstferien in 24 Tagen". Er kommt fertig aus den
-// Daten: Gerechnet wird im privaten Projekt, hier steht nur die Anzeige.
-//
-// Er haengt am Tag und nicht an der Datei, weil die Seite blaettert - ein
-// Countdown von heute stuende auf jedem anderen Tag falsch da. Fehlt er,
-// verschwindet die Zeile. Das ist der Normalfall, wenn der Ferienabruf
-// ausgefallen ist, und besser als eine erfundene Zahl.
-export function ferienText(tag) {
-  const text = tag?.ferien;
-  return typeof text === 'string' && text !== '' ? text : null;
 }
 
 // Die Terminhinweise, etwa "In 2 Tagen (31.8.): Fach A, Probe…". Sie
