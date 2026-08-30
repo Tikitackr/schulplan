@@ -6,9 +6,26 @@ import { quelleAusFragment, ferienText, terminTexte, offeneAufgaben } from '../s
 // Sonst waere sie ein offener Abrufdienst fuer beliebige Adressen.
 
 test('eine gueltige Kennung ergibt eine Adresse', () => {
-  const url = quelleAusFragment('#0123456789abcdef0123456789abcdef');
+  const url = quelleAusFragment('#0123456789abcdef0123456789abcdef', 1234);
   assert.ok(url.startsWith('https://gist.githubusercontent.com/'));
-  assert.ok(url.endsWith('/raw/plan.json'));
+  assert.ok(url.includes('/raw/plan.json'));
+});
+
+// Gemessen am 30.08.2026: Der Ausliefer-Zwischenspeicher haelt je Variante
+// eine eigene Kopie. Unkomprimiert kam die frische Datei, komprimiert - also
+// so, wie jeder Browser fragt - eine 45 Minuten alte. 'cache: no-store' im
+// fetch hilft nicht, es steuert nur den Browser, nicht das Netz davor.
+// Eine wechselnde Kennung an der Adresse macht daraus jedes Mal eine eigene
+// Anfrage. Sie ist Teil der Adresse und deshalb hier, nicht im Aufrufer.
+test('die Adresse traegt eine wechselnde Kennung gegen den Zwischenspeicher', () => {
+  assert.ok(quelleAusFragment('#0123456789abcdef0123456789abcdef', 1234).endsWith('?t=1234'));
+  // Ohne Argument muss die Kennung die aktuelle Zeit sein. Ein Vergleich
+  // zweier Aufrufe wuerde das nicht zeigen: Ein fester Wert waere ebenfalls
+  // verschieden von einem uebergebenen, und zwei Aufrufe in derselben
+  // Millisekunde sind gleich. Also gegen die Uhr geprueft.
+  const vorher = Date.now();
+  const kennung = Number(quelleAusFragment('#0123456789abcdef0123456789abcdef').split('?t=')[1]);
+  assert.ok(kennung >= vorher && kennung <= Date.now(), String(kennung));
 });
 
 test('ohne Fragment gibt es keine Adresse', () => {

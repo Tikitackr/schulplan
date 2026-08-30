@@ -7,10 +7,18 @@
 // fremde Adressen - jeder koennte ihr eine eigene anhaengen.
 const KENNUNG = /^[0-9a-f]{32}$/;
 
-export function quelleAusFragment(fragment) {
+//
+// Die Adresse traegt eine wechselnde Kennung ('?t='). Gemessen am 30.08.2026:
+// Der Ausliefer-Zwischenspeicher haelt je Kompressionsvariante eine eigene
+// Kopie. Unkomprimiert abgerufen kam die frische Datei, komprimiert - also so,
+// wie jeder Browser fragt - eine 45 Minuten alte. Die Seite sah damit richtig
+// aus und zeigte trotzdem den vorletzten Stand. 'cache: no-store' im fetch
+// half nicht: Es steuert den Browser, nicht das Netz davor. Die Kennung macht
+// aus jedem Aufruf eine eigene Anfrage.
+export function quelleAusFragment(fragment, jetzt = Date.now()) {
   const roh = String(fragment || '').replace(/^#/, '').trim();
   if (!KENNUNG.test(roh)) return null;
-  return `https://gist.githubusercontent.com/Tikitackr/${roh}/raw/plan.json`;
+  return `https://gist.githubusercontent.com/Tikitackr/${roh}/raw/plan.json?t=${jetzt}`;
 }
 
 // Ab dieser Stunde zeigt die Seite den naechsten Tag statt des heutigen.
