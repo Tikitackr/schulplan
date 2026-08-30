@@ -138,3 +138,18 @@ export function terminTexte(tag) {
   if (Array.isArray(liste)) return liste.filter(satz);
   return satz(tag?.termin) ? [tag.termin] : [];
 }
+
+// Welche Aufgaben an einem Tag noch offen sind: erledigte raus, abgelaufene
+// raus, nach Frist sortiert. Bis zum 30.08.2026 stand diese Auswahl inline in
+// index.html und war von keinem Test erreichbar.
+//
+// Eintraege mit 'keineAufgabe' bleiben ebenfalls draussen. Es sind
+// Ankuendigungen, die als Hausaufgabe eingetragen wurden - ein Elternabend
+// etwa. Welche das sind, entscheidet das private Projekt und markiert sie;
+// hier wird nur nicht gezeigt, was markiert ist. Sie stehen oben in den
+// Terminzeilen, dort ungekuerzt.
+export function offeneAufgaben(homework, datum) {
+  return (homework || [])
+    .filter(a => !a.completed && !a.keineAufgabe && a.due >= datum)
+    .sort((a, b) => a.due.localeCompare(b.due));
+}

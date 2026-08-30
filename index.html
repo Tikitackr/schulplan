@@ -85,7 +85,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminTexte } from './seite.js?v=4';
+import { quelleAusFragment, waehleTag, standText, packEintrag, packText, stundenTitel, ferienText, terminTexte, offeneAufgaben } from './seite.js?v=5';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -202,9 +202,7 @@ function malen(daten, tage, datum, blaettern) {
     inhalt.appendChild(klappe);
   }
 
-  const offen = (daten.homework || [])
-    .filter(a => !a.completed && a.due >= datum)
-    .sort((a, b) => a.due.localeCompare(b.due));
+  const offen = offeneAufgaben(daten.homework, datum);
   // Zugeklappt, mit der Anzahl im Titel: Fuenf Aufgaben mit vollem Text sind
   // der halbe Bildschirm. Das Signal entsteht aus der Zahl, ohne Deko.
   if (offen.length === 0) {

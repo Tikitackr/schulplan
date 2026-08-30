@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { quelleAusFragment, ferienText, terminTexte } from '../seite.js';
+import { quelleAusFragment, ferienText, terminTexte, offeneAufgaben } from '../seite.js';
 
 // Die Seite darf nur Adressen abrufen, die wie eine Gist-Kennung aussehen.
 // Sonst waere sie ein offener Abrufdienst fuer beliebige Adressen.
@@ -204,6 +204,13 @@ test('die Seite ruft die Terminzeilen auch auf', () => {
     'die alte Einzahl-Funktion gibt es nicht mehr');
 });
 
+test('die Seite holt ihre Aufgabenliste aus dem Modul', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(html, /offeneAufgaben\(daten\.homework, datum\)/);
+  assert.doesNotMatch(html, /filter\(a => !a\.completed/,
+    'die Auswahl gehoert ins Modul, wo Tests sie erreichen');
+});
+
 test('die Seite meldet sich, wenn sie haengen bleibt', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /Wird geladen/);
@@ -256,4 +263,42 @@ test('leere und fremde Eintraege fallen aus der Liste', () => {
   assert.deepEqual(terminTexte({ termine: ['Heute (1.1.): Fach A, Probe', '', null, 42, {}] }),
     ['Heute (1.1.): Fach A, Probe']);
   assert.deepEqual(terminTexte({ termine: 'kein Feld fuer einen Satz' }), []);
+});
+
+// --- Die Aufgabenliste -----------------------------------------------------
+// Die Auswahl stand bis zum 30.08.2026 inline in index.html und war damit von
+// keinem Test erreichbar. Sie steht jetzt hier, weil sie eine Regel hat:
+// erledigt raus, vergangen raus, markiert raus, nach Frist sortiert.
+
+const A = (due, rest = {}) => ({ due, text: 'etwas', completed: false, ...rest });
+
+test('offene Aufgaben stehen nach Frist sortiert', () => {
+  const liste = offeneAufgaben([A('2026-09-03'), A('2026-09-01')], '2026-09-01');
+  assert.deepEqual(liste.map(a => a.due), ['2026-09-01', '2026-09-03']);
+});
+
+test('erledigte und vergangene Aufgaben fallen weg', () => {
+  const liste = offeneAufgaben([
+    A('2026-09-02', { completed: true }),
+    A('2026-08-30'),
+    A('2026-09-02'),
+  ], '2026-09-01');
+  assert.deepEqual(liste.map(a => a.due), ['2026-09-02']);
+});
+
+// Der Kern der Meldung vom 30.08.2026: Ein Elternabend ist keine Hausaufgabe.
+// Markiert wird er im privaten Projekt; hier wird nur nicht gezeigt, was
+// markiert ist. Gerechnet wird auch dabei nichts.
+test('markierte Ankuendigungen stehen nicht in der Aufgabenliste', () => {
+  const liste = offeneAufgaben([
+    A('2026-09-01', { keineAufgabe: true }),
+    A('2026-09-01'),
+  ], '2026-09-01');
+  assert.equal(liste.length, 1);
+  assert.equal(liste[0].keineAufgabe, undefined);
+});
+
+test('ohne Aufgaben kommt eine leere Liste', () => {
+  assert.deepEqual(offeneAufgaben(null, '2026-09-01'), []);
+  assert.deepEqual(offeneAufgaben([], '2026-09-01'), []);
 });
