@@ -322,3 +322,32 @@ test('ohne Aufgaben kommt eine leere Liste', () => {
   assert.deepEqual(offeneAufgaben(null, '2026-09-01'), []);
   assert.deepEqual(offeneAufgaben([], '2026-09-01'), []);
 });
+
+import { istFerientag } from '../seite.js';
+
+// In den Ferien gibt es keine Stunden, aber Tage mit der Marke 'ferientag'.
+// Sie zaehlen bei der Auswahl mit, sonst meldet die Seite "kein einziger Tag
+// mit Unterricht" und der Ferienhinweis kommt nie an (bis 14.10.2026 so).
+
+const ferien = [
+  { date: '2026-08-28', lessons: [], ferientag: true, ferien: 'Testferien noch bis 31.8.' },
+  { date: '2026-08-31', lessons: [], ferientag: true, ferien: 'Testferien noch bis 31.8.' },
+  { date: '2026-09-01', lessons: [{}] },
+];
+
+test('ein Ferientag wird ausgewaehlt wie ein Schultag', () => {
+  assert.equal(waehleTag(ferien, new Date('2026-08-28T09:00:00')), '2026-08-28');
+  assert.equal(waehleTag(ferien, new Date('2026-08-28T15:00:00')), '2026-08-31');
+});
+
+test('ein leerer Tag ohne Ferienmarke wird weiter uebersprungen', () => {
+  const ohneMarke = [{ date: '2026-08-28', lessons: [] }, { date: '2026-08-31', lessons: [{}] }];
+  assert.equal(waehleTag(ohneMarke, new Date('2026-08-28T09:00:00')), '2026-08-31');
+});
+
+test('istFerientag liest nur die Marke, es rechnet nichts', () => {
+  assert.equal(istFerientag(ferien[0]), true);
+  assert.equal(istFerientag({ lessons: [] }), false);
+  assert.equal(istFerientag({ lessons: [], ferientag: 'ja' }), false);
+  assert.equal(istFerientag(undefined), false);
+});

@@ -100,7 +100,7 @@
 // hochgezaehlt werden. Ohne sie kann ein Geraet die neue Seite mit einer
 // alten, zwischengespeicherten seite.js mischen; dann fehlen der Seite
 // Funktionen, das Skript bricht ab und es bleibt bei "Wird geladen ...".
-import { quelleAusFragment, waehleTag, standText, packEintrag, stundenTitel, ferienText, terminTexte, offeneAufgaben } from './seite.js?v=7';
+import { quelleAusFragment, waehleTag, standText, packEintrag, stundenTitel, ferienText, terminTexte, offeneAufgaben, istFerientag } from './seite.js?v=8';
 
 // Beide Sonderfaelle werden benannt, in derselben Sprache.
 const VERMERK = { cancelled: '(fällt aus)', substitution: '(Vertretung)' };
@@ -178,54 +178,59 @@ function malen(daten, tage, datum, blaettern) {
   const ferien = ferienText(tag);
   if (ferien) inhalt.appendChild(el('p', 'ferien', ferien));
 
-  // Die Packliste steht oben: Sie ist der Zweck der Seite. Der Stundenplan
-  // ist ihre Begruendung, nicht die Hauptsache.
-  inhalt.appendChild(el('h2', null, 'Einpacken'));
-  const stuecke = (tag.packliste || []).map(packEintrag).filter(Boolean);
-  if (stuecke.length === 0) {
-    inhalt.appendChild(el('p', null, 'Nichts Besonderes.'));
-  } else {
-    const liste = el('ul');
-    for (const stueck of stuecke) {
-      const zeile = el('li');
-      const punkt = el('span', stueck.farbe ? 'punkt' : 'punkt leer');
-      if (stueck.farbe) punkt.style.background = stueck.farbe;
-      zeile.appendChild(punkt);
-      // In der Liste steht das Fach. Was genau einzupacken ist, versteckt
-      // sich dahinter - sonst ueberdeckt eine Zeile wie die von Mathe die
-      // ganze Liste. Wo es nichts zu verbergen gibt, bleibt es beim Wort:
-      // ein Pfeil ohne Inhalt waere ein leeres Versprechen.
-      if (stueck.details) {
-        const klappe = el('details', 'pack');
-        klappe.appendChild(el('summary', null, stueck.titel));
-        klappe.appendChild(el('div', 'pack-details', stueck.details));
-        zeile.appendChild(klappe);
-      } else {
-        zeile.appendChild(el('span', null, stueck.titel));
+  // Ein Ferientag hat nichts einzupacken und keinen Stundenplan. Beides als
+  // "Nichts Besonderes" und "Kein Unterricht" zu zeigen, waere Rauschen;
+  // es bleiben Ferienzeile und Hausaufgaben.
+  if (!istFerientag(tag)) {
+    // Die Packliste steht oben: Sie ist der Zweck der Seite. Der Stundenplan
+    // ist ihre Begruendung, nicht die Hauptsache.
+    inhalt.appendChild(el('h2', null, 'Einpacken'));
+    const stuecke = (tag.packliste || []).map(packEintrag).filter(Boolean);
+    if (stuecke.length === 0) {
+      inhalt.appendChild(el('p', null, 'Nichts Besonderes.'));
+    } else {
+      const liste = el('ul');
+      for (const stueck of stuecke) {
+        const zeile = el('li');
+        const punkt = el('span', stueck.farbe ? 'punkt' : 'punkt leer');
+        if (stueck.farbe) punkt.style.background = stueck.farbe;
+        zeile.appendChild(punkt);
+        // In der Liste steht das Fach. Was genau einzupacken ist, versteckt
+        // sich dahinter - sonst ueberdeckt eine Zeile wie die von Mathe die
+        // ganze Liste. Wo es nichts zu verbergen gibt, bleibt es beim Wort:
+        // ein Pfeil ohne Inhalt waere ein leeres Versprechen.
+        if (stueck.details) {
+          const klappe = el('details', 'pack');
+          klappe.appendChild(el('summary', null, stueck.titel));
+          klappe.appendChild(el('div', 'pack-details', stueck.details));
+          zeile.appendChild(klappe);
+        } else {
+          zeile.appendChild(el('span', null, stueck.titel));
+        }
+        liste.appendChild(zeile);
       }
-      liste.appendChild(zeile);
+      inhalt.appendChild(liste);
     }
-    inhalt.appendChild(liste);
-  }
 
-  // Beide Klappen stehen zu (ausdruecklicher Wunsch, 29.08.2026). Die
-  // Packliste steht darueber offen da, und die ist der Zweck der Seite.
-  if (tag.lessons.length === 0) {
-    inhalt.appendChild(el('h2', null, 'Stundenplan'));
-    inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
-  } else {
-    const klappe = el('details');
-    klappe.appendChild(el('summary', null, stundenTitel(tag)));
-    for (const s of tag.lessons) {
-      const zeile = el('div', 'zeile');
-      zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));
-      zeile.appendChild(el('span', s.status === 'cancelled' ? 'aus' : null, s.subject));
-      const vermerk = VERMERK[s.status];
-      if (vermerk) zeile.appendChild(el('span', 'vermerk', vermerk));
-      if (s.room) zeile.appendChild(el('span', 'raum', s.room));
-      klappe.appendChild(zeile);
+    // Beide Klappen stehen zu (ausdruecklicher Wunsch, 29.08.2026). Die
+    // Packliste steht darueber offen da, und die ist der Zweck der Seite.
+    if (tag.lessons.length === 0) {
+      inhalt.appendChild(el('h2', null, 'Stundenplan'));
+      inhalt.appendChild(el('p', null, 'Kein Unterricht.'));
+    } else {
+      const klappe = el('details');
+      klappe.appendChild(el('summary', null, stundenTitel(tag)));
+      for (const s of tag.lessons) {
+        const zeile = el('div', 'zeile');
+        zeile.appendChild(el('span', 'zeit', s.start + '–' + s.end));
+        zeile.appendChild(el('span', s.status === 'cancelled' ? 'aus' : null, s.subject));
+        const vermerk = VERMERK[s.status];
+        if (vermerk) zeile.appendChild(el('span', 'vermerk', vermerk));
+        if (s.room) zeile.appendChild(el('span', 'raum', s.room));
+        klappe.appendChild(zeile);
+      }
+      inhalt.appendChild(klappe);
     }
-    inhalt.appendChild(klappe);
   }
 
   const offen = offeneAufgaben(daten.homework, datum);

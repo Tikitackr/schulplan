@@ -31,8 +31,15 @@ export function quelleAusFragment(fragment, jetzt = Date.now()) {
 // Daten baut, weiss nicht, wann jemand die Seite oeffnet.
 export const WECHSEL_AB_STUNDE = 15;
 
+// Ein Ferientag hat keine Stunden, aber einen Ferienhinweis. Ob ein Tag einer
+// ist, steht als Marke in den Daten - hier wird es nicht aus "keine Stunden"
+// erschlossen, wie hier ueberhaupt nichts gerechnet wird.
+export function istFerientag(tag) {
+  return tag?.ferientag === true;
+}
+
 export function waehleTag(days, jetzt) {
-  const mitStunden = (days || []).filter(d => d.lessons && d.lessons.length > 0);
+  const mitStunden = (days || []).filter(d => (d.lessons && d.lessons.length > 0) || istFerientag(d));
   if (mitStunden.length === 0) return null;
   const sortiert = [...mitStunden].sort((a, b) => a.date.localeCompare(b.date));
   const heute = [
